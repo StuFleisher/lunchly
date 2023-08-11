@@ -10,12 +10,37 @@ const Reservation = require("./models/reservation");
 
 const router = new express.Router();
 
-/** Homepage: show list of customers. */
+
+/** Homepage post search: show list of customers
+ * optionally accepts query param 'search':
+ * displays a filtered list of customers which searches first or last name
+ * supports partial match
+*/
 
 router.get("/", async function (req, res, next) {
-  const customers = await Customer.all();
+  const search = req.query.search;
+  let customers;
+
+  if (search === undefined){
+    customers = await Customer.all();
+  } else {
+    customers = await Customer.search(search);
+  }
   return res.render("customer_list.html", { customers });
 });
+
+
+
+/** Displays records for the 10 customers with the most reservations on file
+*/
+
+router.get("/top-ten", async function (req, res, next) {
+  const customers = await Customer.getBestCustomers();
+  console.log(customers);
+  return res.render("customer_list.html", { customers });
+});
+
+
 
 /** Form to add a new customer. */
 

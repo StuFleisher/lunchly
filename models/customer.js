@@ -56,13 +56,62 @@ class Customer {
     return new Customer(customer);
   }
 
+
+  /** Retrieves the 10 customers with the most reservations on file */
+
+  static async getBestCustomers() {
+    const results = await db.query(
+      `SELECT
+      COUNT(r.id) AS "resCount",
+      c.id as id,
+      first_name AS "firstName",
+      last_name AS "lastName",
+      phone,
+      c.notes as notes
+      FROM reservations as r JOIN customers as c on r.customer_id = c.id
+      GROUP BY c.id
+      ORDER BY "resCount" desc
+      LIMIT 10`
+    )
+      //TODO: why are we using "firstName" vs firstName
+
+
+    console.log(results.rows)
+    return results.rows.map(c =>
+      new Customer(c));
+  }
+
+  /** returns a list of customers whose name includes the search term */
+
+  static async search(search){
+    const results = await db.query(
+      `SELECT id,
+        first_name AS "firstName",
+        last_name  AS "lastName",
+        phone,
+        notes
+      FROM customers
+      WHERE CONCAT(first_name, ' ', last_name) LIKE $1
+      ORDER BY last_name, first_name`,
+      [`%${search}%`]
+    );
+  return results.rows.map(c => new Customer(c));
+}
+
+
   /** get all reservations for this customer. */
 
   async getReservations() {
     return await Reservation.getReservationsForCustomer(this.id);
   }
 
+
+
   /** save this customer. */
+
+  fullName(){
+    return `${this.firstName} ${this.lastName}`
+  }
 
   async save() {
     if (this.id === undefined) {
