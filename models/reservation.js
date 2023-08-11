@@ -5,6 +5,7 @@
 const moment = require("moment");
 
 const db = require("../db");
+const Customer = require("./customer");
 
 /** A reservation for a party */
 
@@ -12,10 +13,25 @@ class Reservation {
   constructor({ id, customerId, numGuests, startAt, notes }) {
     this.id = id;
     this.customerId = customerId;
-    this.numGuests = numGuests;
+    this._numGuests = numGuests;
     this.startAt = startAt;
     this.notes = notes;
   }
+
+  /** Set _numGuests or throw an error if arg is less than 1 */
+  set numGuests(numGuests){
+    if (numGuests<1){
+      throw new Error("There must be at least 1 guest");
+    }
+    this._numGuests = numGuests;
+  }
+
+  /** numGuest getter */
+  get numGuests(){
+    return this._numGuests;
+  }
+
+  
 
   /** formatter for startAt */
 
@@ -49,7 +65,7 @@ class Reservation {
         `INSERT INTO reservations (customer_id, start_at, num_guests, notes)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-        [this.customerId, this.startAt, this.numGuests, this.notes],
+        [this.customerId, this.startAt, this._numGuests, this.notes],
       );
       this.id = result.rows[0].id;
     } else {
@@ -63,7 +79,7 @@ class Reservation {
              WHERE id = $5`, [
         this.customerId,
         this.startAt,
-        this.numGuests,
+        this._numGuests,
         this.notes,
         this.id,
       ],

@@ -13,7 +13,7 @@ class Customer {
     this.firstName = firstName;
     this.lastName = lastName;
     this.phone = phone;
-    this.notes = notes;
+    this.#notes = notes;
   }
 
   /** find all customers. */
@@ -111,10 +111,27 @@ class Customer {
     return await Reservation.getReservationsForCustomer(this.id);
   }
 
+  /** Cleans falsy values and sets notes */
+
+  set notes(notes) {
+    if (!notes) {
+      this.#notes = "";
+    } else {
+      this.#notes = notes;
+    }
+  }
+
+  /** returns the notes property */
+
+  get notes(){
+    return this.#notes;
+  }
+
+
   // TODO: fix doc strings below
   /** save this customer. */
 
-  fullName() {
+  get fullName() {
     return `${this.firstName} ${this.lastName}`;
   }
 
@@ -124,7 +141,7 @@ class Customer {
         `INSERT INTO customers (first_name, last_name, phone, notes)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-        [this.firstName, this.lastName, this.phone, this.notes],
+        [this.firstName, this.lastName, this.phone, this.#notes],
       );
       this.id = result.rows[0].id;
     } else {
@@ -138,7 +155,7 @@ class Customer {
         this.firstName,
         this.lastName,
         this.phone,
-        this.notes,
+        this.#notes,
         this.id,
       ],
       );
