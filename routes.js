@@ -21,7 +21,7 @@ router.get("/", async function (req, res, next) {
   const search = req.query.search;
   let customers;
 
-  if (search === undefined){
+  if (search === undefined) {
     customers = await Customer.all();
   } else {
     customers = await Customer.search(search);
@@ -36,7 +36,6 @@ router.get("/", async function (req, res, next) {
 
 router.get("/top-ten", async function (req, res, next) {
   const customers = await Customer.getBestCustomers();
-  console.log(customers);
   return res.render("customer_list.html", { customers });
 });
 

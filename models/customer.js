@@ -20,7 +20,7 @@ class Customer {
 
   static async all() {
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
@@ -34,15 +34,24 @@ class Customer {
   /** get a customer by ID. */
 
   static async get(id) {
+
+    // need to account for non-integer values in path
+    // TODO: move this to the route
+    if (isNaN(Number(id))) {
+      const err = new Error(`Resource does not exist.`);
+      err.status = 404;
+      throw err;
+    }
+
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
                   notes
            FROM customers
            WHERE id = $1`,
-        [id],
+      [id],
     );
 
     const customer = results.rows[0];
@@ -58,7 +67,7 @@ class Customer {
 
 
   /** Retrieves the 10 customers with the most reservations on file */
-
+  // TODO: Format SQL statement to be readable
   static async getBestCustomers() {
     const results = await db.query(
       `SELECT
@@ -72,18 +81,15 @@ class Customer {
       GROUP BY c.id
       ORDER BY "resCount" desc
       LIMIT 10`
-    )
-      //TODO: why are we using "firstName" vs firstName
+    );
 
-
-    console.log(results.rows)
     return results.rows.map(c =>
       new Customer(c));
   }
 
   /** returns a list of customers whose name includes the search term */
 
-  static async search(search){
+  static async search(search) {
     const results = await db.query(
       `SELECT id,
         first_name AS "firstName",
@@ -91,12 +97,12 @@ class Customer {
         phone,
         notes
       FROM customers
-      WHERE CONCAT(first_name, ' ', last_name) LIKE $1
+      WHERE CONCAT(first_name, ' ', last_name) ILIKE $1
       ORDER BY last_name, first_name`,
       [`%${search}%`]
     );
-  return results.rows.map(c => new Customer(c));
-}
+    return results.rows.map(c => new Customer(c));
+  }
 
 
   /** get all reservations for this customer. */
@@ -105,37 +111,36 @@ class Customer {
     return await Reservation.getReservationsForCustomer(this.id);
   }
 
-
-
+  // TODO: fix doc strings below
   /** save this customer. */
 
-  fullName(){
-    return `${this.firstName} ${this.lastName}`
+  fullName() {
+    return `${this.firstName} ${this.lastName}`;
   }
 
   async save() {
     if (this.id === undefined) {
       const result = await db.query(
-            `INSERT INTO customers (first_name, last_name, phone, notes)
+        `INSERT INTO customers (first_name, last_name, phone, notes)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-          [this.firstName, this.lastName, this.phone, this.notes],
+        [this.firstName, this.lastName, this.phone, this.notes],
       );
       this.id = result.rows[0].id;
     } else {
       await db.query(
-            `UPDATE customers
+        `UPDATE customers
              SET first_name=$1,
                  last_name=$2,
                  phone=$3,
                  notes=$4
              WHERE id = $5`, [
-            this.firstName,
-            this.lastName,
-            this.phone,
-            this.notes,
-            this.id,
-          ],
+        this.firstName,
+        this.lastName,
+        this.phone,
+        this.notes,
+        this.id,
+      ],
       );
     }
   }
